@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import type { BookingStatus } from "@/lib/mock-data";
+import type { Database } from "@/integrations/supabase/types";
+
+type BookingStatus = Database["public"]["Enums"]["booking_status"];
 
 const statusConfig: Record<BookingStatus, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-warning/15 text-warning border-warning/30" },
