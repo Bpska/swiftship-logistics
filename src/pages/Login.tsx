@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Loader2, Eye, EyeOff } from "lucide-react";
+import { Truck, Loader2, Eye, EyeOff, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
@@ -90,6 +90,24 @@ export default function Login() {
                 {isRegister ? "Log In" : "Sign Up"}
               </button>
             </p>
+            {!isRegister && (
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+                  onClick={() => {
+                    setForm({ ...form, email: "bpskar2@gmail.com", password: "bps123" });
+                  }}
+                >
+                  <Shield className="h-4 w-4" />
+                  Fill Admin Credentials
+                </Button>
+                <p className="mt-2 text-xs text-center text-muted-foreground">
+                  Admin: bpskar2@gmail.com / bps123
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
