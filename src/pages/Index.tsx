@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Shield, Truck, ArrowRight, CheckCircle, Star, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
