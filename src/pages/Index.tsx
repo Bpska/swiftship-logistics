@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
+import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Shield, Truck, ArrowRight, CheckCircle, Star, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -44,7 +45,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
+      <LocationPermissionDialog />
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary py-24 md:py-36">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.15),transparent_60%)]" />
