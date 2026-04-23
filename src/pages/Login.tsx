@@ -100,7 +100,7 @@ export default function Login() {
                     setForm({ ...form, email: "bpskar2@gmail.com", password: "bps123" });
                   }}
                 >
-                  <User className="h-4 w-4" />
+                  <Shield className="h-4 w-4" />
                   Fill Admin Credentials
                 </Button>
                 <p className="mt-2 text-xs text-center text-muted-foreground">
