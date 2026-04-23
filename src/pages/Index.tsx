@@ -45,7 +45,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
+      <LocationPermissionDialog />
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary py-24 md:py-36">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.15),transparent_60%)]" />
