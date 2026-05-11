@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { MapView } from "@/components/MapView";
+import { geocodeAddress, reverseGeocode } from "@/lib/geocode";
 import { toast } from "sonner";
 import { MapPin, Calendar, ArrowRight, CheckCircle, Loader2, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,29 +18,14 @@ import { motion, AnimatePresence } from "framer-motion";
 const GST_RATE = 0.18;
 const BASE_FARE = 50;
 
-// Some Indian city coordinates for mock geocoding
-const CITY_COORDS: Record<string, [number, number]> = {
-  mumbai: [19.076, 72.8777],
-  delhi: [28.7041, 77.1025],
-  bangalore: [12.9716, 77.5946],
-  chennai: [13.0827, 80.2707],
-  kolkata: [22.5726, 88.3639],
-  pune: [18.5204, 73.8567],
-  hyderabad: [17.385, 78.4867],
-  ahmedabad: [23.0225, 72.5714],
-  jaipur: [26.9124, 75.7873],
-  lucknow: [26.8467, 80.9462],
-  andheri: [19.1136, 72.8697],
-  bandra: [19.0596, 72.8295],
-};
-
-function getCityCoords(name: string): [number, number] | null {
-  const key = name.toLowerCase().replace(/[^a-z]/g, "");
-  for (const [city, coords] of Object.entries(CITY_COORDS)) {
-    if (key.includes(city) || city.includes(key)) return coords;
-  }
-  // Random offset from center of India
-  return [20.5 + Math.random() * 8 - 4, 78.9 + Math.random() * 8 - 4];
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return Math.round(2 * R * Math.asin(Math.sqrt(x)));
 }
 
 interface Vehicle {
@@ -65,6 +51,10 @@ export default function BookVehicle() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [dropCoords, setDropCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -79,23 +69,57 @@ export default function BookVehicle() {
     if (position) setUserLocation(position);
   }, [position]);
 
+  // Auto-fill pickup using reverse-geocoding once we get the user's location
+  useEffect(() => {
+    if (!userLocation || autoFilled || pickup) return;
+    setAutoFilled(true);
+    reverseGeocode(userLocation.lat, userLocation.lng).then((name) => {
+      if (name) {
+        setPickup(name);
+        setPickupCoords(userLocation);
+        toast.success("Pickup auto-filled from your location");
+      }
+    });
+  }, [userLocation, autoFilled, pickup]);
+
+  // Debounced geocoding for pickup field
+  useEffect(() => {
+    if (!pickup || pickup.length < 3) { setPickupCoords(null); return; }
+    const t = setTimeout(async () => {
+      setGeocoding(true);
+      const r = await geocodeAddress(pickup);
+      if (r) setPickupCoords({ lat: r.lat, lng: r.lng });
+      setGeocoding(false);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [pickup]);
+
+  // Debounced geocoding for drop field
+  useEffect(() => {
+    if (!drop || drop.length < 3) { setDropCoords(null); return; }
+    const t = setTimeout(async () => {
+      setGeocoding(true);
+      const r = await geocodeAddress(drop);
+      if (r) setDropCoords({ lat: r.lat, lng: r.lng });
+      setGeocoding(false);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [drop]);
+
   const handleLocationGranted = useCallback((lat: number, lng: number) => {
     setUserLocation({ lat, lng });
   }, []);
 
   const vehicle = vehicles.find((v) => v.id === selected);
-  const mockDistance = pickup && drop ? Math.floor(Math.random() * 50) + 10 : 0;
-  const distanceCharge = vehicle ? mockDistance * vehicle.rate_per_km : 0;
+  const distance = pickupCoords && dropCoords ? haversineKm(pickupCoords, dropCoords) : 0;
+  const distanceCharge = vehicle ? distance * vehicle.rate_per_km : 0;
   const subtotal = BASE_FARE + distanceCharge;
   const gst = subtotal * GST_RATE;
   const total = subtotal + gst;
 
-  const pickupCoords = pickup ? getCityCoords(pickup) : null;
-  const dropCoords = drop ? getCityCoords(drop) : null;
-
   const mapMarkers = [
-    ...(pickupCoords ? [{ lat: pickupCoords[0], lng: pickupCoords[1], label: `Pickup: ${pickup}`, type: "pickup" as const }] : []),
-    ...(dropCoords ? [{ lat: dropCoords[0], lng: dropCoords[1], label: `Drop: ${drop}`, type: "drop" as const }] : []),
+    ...(pickupCoords ? [{ lat: pickupCoords.lat, lng: pickupCoords.lng, label: `Pickup: ${pickup}`, type: "pickup" as const }] : []),
+    ...(dropCoords ? [{ lat: dropCoords.lat, lng: dropCoords.lng, label: `Drop: ${drop}`, type: "drop" as const }] : []),
   ];
 
   const handleConfirm = async () => {
