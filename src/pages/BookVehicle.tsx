@@ -133,7 +133,7 @@ export default function BookVehicle() {
         pickup,
         drop_location: drop,
         pickup_date: new Date(date).toISOString(),
-        distance: mockDistance,
+        distance: distance,
         base_fare: BASE_FARE,
         distance_charge: distanceCharge,
         gst: Math.round(gst),
@@ -321,12 +321,12 @@ export default function BookVehicle() {
                       <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup</span><span className="font-medium text-right max-w-[60%] truncate">{pickup}</span></div>
                       <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop</span><span className="font-medium text-right max-w-[60%] truncate">{drop}</span></div>
                       <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date</span><span className="font-medium">{new Date(date).toLocaleString()}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Est. Distance</span><span className="font-medium">{mockDistance} km</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Est. Distance</span><span className="font-medium">{distance} km</span></div>
                     </div>
                     <hr />
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm"><span className="text-muted-foreground">Base Fare</span><span>₹{BASE_FARE}</span></div>
-                      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Distance ({mockDistance} km × ₹{vehicle?.rate_per_km})</span><span>₹{distanceCharge}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Distance ({distance} km × ₹{vehicle?.rate_per_km})</span><span>₹{distanceCharge}</span></div>
                       <div className="flex justify-between text-sm"><span className="text-muted-foreground">GST (18%)</span><span>₹{gst.toFixed(0)}</span></div>
                     </div>
                     <hr />
