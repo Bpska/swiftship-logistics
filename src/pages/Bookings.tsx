@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapView } from "@/components/MapView";
+import { geocodeAddress } from "@/lib/geocode";
 import { Package, Loader2, Inbox, MapPin, Calendar, Truck, IndianRupee } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Tables } from "@/integrations/supabase/types";
@@ -17,6 +18,27 @@ export default function Bookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [routeMarkers, setRouteMarkers] = useState<{ lat: number; lng: number; label: string; type: "pickup" | "drop" }[]>([]);
+  const [geocodingRoute, setGeocodingRoute] = useState(false);
+
+  useEffect(() => {
+    if (!selectedBooking) { setRouteMarkers([]); return; }
+    let cancelled = false;
+    setGeocodingRoute(true);
+    (async () => {
+      const [p, d] = await Promise.all([
+        geocodeAddress(selectedBooking.pickup),
+        geocodeAddress(selectedBooking.drop_location),
+      ]);
+      if (cancelled) return;
+      const markers: typeof routeMarkers = [];
+      if (p) markers.push({ lat: p.lat, lng: p.lng, label: `Pickup: ${selectedBooking.pickup}`, type: "pickup" });
+      if (d) markers.push({ lat: d.lat, lng: d.lng, label: `Drop: ${selectedBooking.drop_location}`, type: "drop" });
+      setRouteMarkers(markers);
+      setGeocodingRoute(false);
+    })();
+    return () => { cancelled = true; };
+  }, [selectedBooking]);
 
   useEffect(() => {
     if (!user) return;
@@ -119,18 +141,12 @@ export default function Bookings() {
                     <CardTitle className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-primary" />
                       {selectedBooking ? `Route: ${selectedBooking.booking_number}` : "Select a booking to view route"}
+                      {geocodingRoute && <Loader2 className="ml-auto h-3 w-3 animate-spin text-muted-foreground" />}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <MapView
-                      markers={
-                        selectedBooking
-                          ? [
-                              { lat: 19.076 + Math.random() * 2, lng: 72.877 + Math.random() * 2, label: `Pickup: ${selectedBooking.pickup}`, type: "pickup" },
-                              { lat: 19.076 + Math.random() * 2, lng: 72.877 + Math.random() * 2, label: `Drop: ${selectedBooking.drop_location}`, type: "drop" },
-                            ]
-                          : []
-                      }
+                      markers={routeMarkers}
                       className="h-[300px] lg:h-[500px] rounded-none"
                     />
                   </CardContent>
